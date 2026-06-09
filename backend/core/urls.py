@@ -29,10 +29,15 @@ def _module_urlpatterns():
                 path(f"api/{prefix}/", include((urls_module, app_label)))
             )
             logger.debug("Registered URLs for module '%s' at /api/%s/", app_label, prefix)
-        except ModuleNotFoundError:
-            logger.warning(
-                "Module '%s' has no urls.py -- skipping URL registration", app_label
-            )
+        except ModuleNotFoundError as exc:
+            urls_module_name = f"{app_label}.urls"
+            if exc.name == urls_module_name:
+                logger.warning(
+                    "Module '%s' has no urls.py -- skipping URL registration", app_label
+                )
+            else:
+                # Missing transitive dependency -- fail loudly rather than silently skip.
+                raise
     return patterns
 
 

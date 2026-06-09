@@ -95,29 +95,88 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Module auto-discovery -- scans modules/*/backend/<name>/apps.py.
-# Exposed as a function so it can be unit-tested in isolation.
+# Exposed as functions so they can be unit-tested in isolation.
 MODULES_DIR = BASE_DIR.parent.parent / "modules"
 
 
-def _discover_modules(modules_dir):
-    """Return sorted list of Django app labels found in modules_dir.
+def _topo_sort(graph):
+    """Topological sort of module names so dependencies precede dependents.
 
+    graph: dict mapping module_name -> list of required module names.
+    Only edges to modules present in the graph are followed (unknown
+    requirements are silently ignored -- install.py enforces completeness).
+    Raises ValueError on circular dependency.
+    """
+    from collections import deque
+
+    installed = set(graph)
+    in_degree = {name: 0 for name in installed}
+    dependents = {name: [] for name in installed}
+
+    for name, requires in graph.items():
+        for req in requires:
+            if req in installed:
+                in_degree[name] += 1
+                dependents[req].append(name)
+
+    queue = deque(sorted(n for n in installed if in_degree[n] == 0))
+    result = []
+    while queue:
+        node = queue.popleft()
+        result.append(node)
+        for dep in sorted(dependents[node]):
+            in_degree[dep] -= 1
+            if in_degree[dep] == 0:
+                queue.append(dep)
+
+    if len(result) != len(installed):
+        cycle = sorted(n for n in installed if n not in result)
+        raise ValueError(f"Circular dependency detected among modules: {cycle}")
+
+    return result
+
+
+def _discover_modules(modules_dir):
+    """Return Django app labels for all valid modules, ordered by dependency.
+
+    Reads each module's module.json `requires` field to produce a topological
+    ordering so dependencies always appear before dependents in INSTALLED_APPS.
+    Falls back gracefully when module.json is absent or malformed.
     Also inserts each module's backend/ directory into sys.path so Django
     can import the app package. Safe to call multiple times (no duplicate paths).
     """
-    apps = []
+    import json
+    import logging
+
     if not modules_dir.exists():
-        return apps
+        return []
+
+    graph = {}  # name -> [required module names]
     for entry in sorted(modules_dir.iterdir()):
         if not entry.is_dir():
             continue
         app_dir = entry / "backend" / entry.name
-        if (app_dir / "apps.py").exists():
-            backend_path = str(entry / "backend")
-            if backend_path not in sys.path:
-                sys.path.insert(0, backend_path)
-            apps.append(entry.name)
-    return apps
+        if not (app_dir / "apps.py").exists():
+            continue
+
+        backend_path = str(entry / "backend")
+        if backend_path not in sys.path:
+            sys.path.insert(0, backend_path)
+
+        requires = []
+        manifest = entry / "module.json"
+        if manifest.exists():
+            try:
+                requires = json.loads(manifest.read_text()).get("requires", [])
+                assert isinstance(requires, list), "requires must be a list"
+            except (json.JSONDecodeError, AssertionError, OSError) as exc:
+                logging.getLogger(__name__).warning(
+                    "module.json in %s is invalid (%s); ignoring requires", entry.name, exc
+                )
+
+        graph[entry.name] = requires
+
+    return _topo_sort(graph)
 
 
 # Kept separate from INSTALLED_APPS so urls.py can iterate only module apps.
