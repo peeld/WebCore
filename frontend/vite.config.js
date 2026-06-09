@@ -1,8 +1,18 @@
+import path from 'path'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      // Allows module api.js files to import from '@core/frontend/api'
+      // without publishing the core package to npm.
+      '@core/frontend': path.resolve(__dirname, './src'),
+    },
+    // Ensure all workspace modules share a single React instance.
+    dedupe: ['react', 'react-dom', 'react-router-dom'],
+  },
   server: {
     proxy: {
       // Forward all /api/ requests to Django during development.

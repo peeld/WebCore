@@ -12,10 +12,14 @@
     "lint": "eslint .",
     "preview": "vite preview"
   },
+  "exports": {
+    "./api": "./src/api.js"
+  },
   "dependencies": {
     "bulma": "^1.0.4",
     "react": "^19.2.6",
-    "react-dom": "^19.2.6"
+    "react-dom": "^19.2.6",
+    "react-router-dom": "^7.6.2"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
