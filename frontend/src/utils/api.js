@@ -31,7 +31,7 @@ import { captureError, captureWarning, addBreadcrumb } from './logger'
  * Throws immediately if missing so the failure is obvious at startup.
  */
 function requireEnv(name, value) {
-  if (!value || value === 'undefined') {
+  if (value === undefined || value === null || value === 'undefined') {
     const err = new Error(`[api.js] Required environment variable ${name} is not set.`)
     captureError(err, { variable: name, mode: import.meta.env.MODE }, 'config')
     throw err
