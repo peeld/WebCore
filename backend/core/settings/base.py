@@ -3,11 +3,12 @@ Shared settings for all environments.
 Environment-specific files (development.py, production.py) import from here.
 """
 import os
+import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
 
-# BASE_DIR = backend/
+# BASE_DIR = core/backend/
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Load .env for local development; no-op when file is absent (production uses real env vars).
@@ -27,15 +28,26 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
     'rest_framework',
     'corsheaders',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'dj_rest_auth',
+    'dj_rest_auth.registration',
+    'rest_framework_simplejwt',
     'core_app',
 ]
+
+SITE_ID = 1
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -91,6 +103,21 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS':  True,
 }
 
+ACCOUNT_LOGIN_METHODS         = {'username'}
+ACCOUNT_SIGNUP_FIELDS         = ['email*', 'username*', 'password1*', 'password2*']
+ACCOUNT_EMAIL_VERIFICATION    = 'none'
+
+REST_AUTH = {
+    'USE_JWT':        True,
+    'JWT_AUTH_COOKIE': None,
+    'TOKEN_MODEL':    None,
+}
+
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
+
+RECAPTCHA_SITE_KEY   = os.environ.get('RECAPTCHA_SITE_KEY', '')
+RECAPTCHA_SECRET_KEY = os.environ.get('RECAPTCHA_SECRET_KEY', '')
+
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'APP': {
@@ -104,11 +131,11 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 EMAIL_BACKEND = 'django_ses.SESBackend'
-AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', '')
+AWS_ACCESS_KEY_ID     = os.environ.get('AWS_ACCESS_KEY_ID', '')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY', '')
-AWS_SES_REGION_NAME = os.environ.get('AWS_SES_REGION_NAME', 'us-east-1')
+AWS_SES_REGION_NAME   = os.environ.get('AWS_SES_REGION_NAME', 'us-east-1')
 AWS_SES_REGION_ENDPOINT = f'email.{AWS_SES_REGION_NAME}.amazonaws.com'
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', '')
+DEFAULT_FROM_EMAIL    = os.environ.get('DEFAULT_FROM_EMAIL', '')
 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
@@ -120,30 +147,91 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-MODULES_DIR = BASE_DIR.parent / "modules"
+# Module auto-discovery -- scans modules/*/backend/<name>/apps.py.
+# Exposed as functions so they can be unit-tested in isolation.
+MODULES_DIR = BASE_DIR.parent.parent / "modules"
 
-from core.installed_modules import (
-    INSTALLED_MODULE_APPS, MODULE_EXTRA_APPS,
-    MODULE_EXTRA_MIDDLEWARE, MODULE_SETTINGS,
-)
-INSTALLED_APPS += MODULE_EXTRA_APPS + INSTALLED_MODULE_APPS
-MIDDLEWARE     += MODULE_EXTRA_MIDDLEWARE
-for _key, _val in MODULE_SETTINGS.items():
-    if _key not in dir():
-        globals()[_key] = _val
 
-# Stripe — override module defaults with env vars so secrets never live in code.
-STRIPE_SECRET_KEY    = os.environ.get('STRIPE_SECRET_KEY', '')
-STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
-STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
-STRIPE_SUCCESS_URL   = os.environ.get('STRIPE_SUCCESS_URL', STRIPE_SUCCESS_URL)
-STRIPE_CANCEL_URL    = os.environ.get('STRIPE_CANCEL_URL', STRIPE_CANCEL_URL)
+def _topo_sort(graph):
+    """Topological sort of module names so dependencies precede dependents.
 
-# File upload — override module defaults with env vars so secrets never live in code.
-AWS_UPLOAD_BUCKET         = os.environ.get('AWS_UPLOAD_BUCKET', '')
-AWS_PROCESSED_BUCKET      = os.environ.get('AWS_PROCESSED_BUCKET', '')
-AWS_S3_REGION             = os.environ.get('AWS_S3_REGION', 'us-east-1')
-FILEUPLOAD_WEBHOOK_SECRET = os.environ.get('FILEUPLOAD_WEBHOOK_SECRET', '')
+    graph: dict mapping module_name -> list of required module names.
+    Only edges to modules present in the graph are followed (unknown
+    requirements are silently ignored -- install.py enforces completeness).
+    Raises ValueError on circular dependency.
+    """
+    from collections import deque
 
-if 'django.contrib.sites' in INSTALLED_APPS:
-    SITE_ID = 1
+    installed = set(graph)
+    in_degree = {name: 0 for name in installed}
+    dependents = {name: [] for name in installed}
+
+    for name, requires in graph.items():
+        for req in requires:
+            if req in installed:
+                in_degree[name] += 1
+                dependents[req].append(name)
+
+    queue = deque(sorted(n for n in installed if in_degree[n] == 0))
+    result = []
+    while queue:
+        node = queue.popleft()
+        result.append(node)
+        for dep in sorted(dependents[node]):
+            in_degree[dep] -= 1
+            if in_degree[dep] == 0:
+                queue.append(dep)
+
+    if len(result) != len(installed):
+        cycle = sorted(n for n in installed if n not in result)
+        raise ValueError(f"Circular dependency detected among modules: {cycle}")
+
+    return result
+
+
+def _discover_modules(modules_dir):
+    """Return Django app labels for all valid modules, ordered by dependency.
+
+    Reads each module's module.json `requires` field to produce a topological
+    ordering so dependencies always appear before dependents in INSTALLED_APPS.
+    Falls back gracefully when module.json is absent or malformed.
+    Also inserts each module's backend/ directory into sys.path so Django
+    can import the app package. Safe to call multiple times (no duplicate paths).
+    """
+    import json
+    import logging
+
+    if not modules_dir.exists():
+        return []
+
+    graph = {}  # name -> [required module names]
+    for entry in sorted(modules_dir.iterdir()):
+        if not entry.is_dir():
+            continue
+        app_dir = entry / "backend" / entry.name
+        if not (app_dir / "apps.py").exists():
+            continue
+
+        backend_path = str(entry / "backend")
+        if backend_path not in sys.path:
+            sys.path.insert(0, backend_path)
+
+        requires = []
+        manifest = entry / "module.json"
+        if manifest.exists():
+            try:
+                requires = json.loads(manifest.read_text()).get("requires", [])
+                assert isinstance(requires, list), "requires must be a list"
+            except (json.JSONDecodeError, AssertionError, OSError) as exc:
+                logging.getLogger(__name__).warning(
+                    "module.json in %s is invalid (%s); ignoring requires", entry.name, exc
+                )
+
+        graph[entry.name] = requires
+
+    return _topo_sort(graph)
+
+
+# Kept separate from INSTALLED_APPS so urls.py can iterate only module apps.
+INSTALLED_MODULE_APPS = _discover_modules(MODULES_DIR)
+INSTALLED_APPS += INSTALLED_MODULE_APPS

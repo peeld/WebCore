@@ -11,7 +11,7 @@ export default defineConfig({
       '@core/frontend': path.resolve(__dirname, './src'),
     },
     // Ensure all workspace modules share a single React instance.
-    dedupe: ['react', 'react-dom', 'react-router-dom'],
+    dedupe: ['react', 'react-dom', 'react-router-dom', '@react-oauth/google'],
   },
   server: {
     proxy: {

@@ -1,9 +1,0 @@
-{
-  "name": "helloworld",
-  "version": "1.0.0",
-  "django_app": "helloworld",
-  "npm_package": "@modules/helloworld",
-  "url_prefix": "helloworld",
-  "requires": [],
-  "description": "Reference implementation. Demonstrates and tests the full module system end-to-end."
-}

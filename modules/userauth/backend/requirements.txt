@@ -1,7 +1,0 @@
-# Python dependencies for the userauth module.
-# install.py / install.sh will pip-install this file into the core backend venv.
-
-djangorestframework-simplejwt>=5.3
-dj-rest-auth[with-social]>=6.0
-django-allauth[socialaccount]>=0.63
-requests>=2.31
