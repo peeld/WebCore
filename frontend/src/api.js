@@ -4,6 +4,8 @@
  * Import via: import { get, post } from '@core/frontend/api'
  */
 
+import { captureError } from './utils/logger'
+
 /** Read the Django CSRF token from the cookie jar. */
 function getCsrfToken() {
   const match = document.cookie.match(/csrftoken=([^;]+)/);
@@ -38,9 +40,7 @@ async function request(method, path, body = null) {
     } catch {
       error.data = null;
     }
-    if (import.meta.env.DEV) {
-      console.error('[api]', method, `/api/${path}`, response.status, error.data);
-    }
+    captureError(error, { method, path: `/api/${path}`, status: response.status, data: error.data }, 'api')
     throw error;
   }
 

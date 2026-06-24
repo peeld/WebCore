@@ -31,6 +31,12 @@ export default function Navbar() {
 
       <div className={`navbar-menu ${menuOpen ? 'is-active' : ''}`}>
         <div className="navbar-start">
+          <NavLink
+            to="/admin"
+            className={({ isActive }) => `navbar-item${isActive ? ' is-active' : ''}`}
+          >
+            Admin
+          </NavLink>
           {moduleNavItems.map(item => (
             <NavLink
               key={item.path}

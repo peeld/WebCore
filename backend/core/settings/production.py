@@ -1,4 +1,5 @@
 """Production settings — PostgreSQL, Sentry, rotating file log, strict security."""
+import logging
 import os
 from .base import *  # noqa: F401, F403
 
@@ -19,10 +20,14 @@ DATABASES = {
 _sentry_dsn = os.environ.get('SENTRY_DSN')
 if _sentry_dsn:
     import sentry_sdk
+    from sentry_sdk.integrations.logging import LoggingIntegration
     sentry_sdk.init(
         dsn=_sentry_dsn,
         traces_sample_rate=0.1,
         send_default_pii=False,
+        integrations=[
+            LoggingIntegration(level=logging.ERROR, event_level=logging.ERROR),
+        ],
     )
 
 CORS_ALLOWED_ORIGINS = [
@@ -52,6 +57,7 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 5,
             'formatter': 'verbose',
+            'encoding': 'utf-8',
         },
         'console': {
             'class': 'logging.StreamHandler',

@@ -94,6 +94,14 @@ SIMPLE_JWT = {
 
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
 
+# ── Billing module (Stripe) ──────────────────────────────────────────────────
+STRIPE_SECRET_KEY     = os.environ.get('STRIPE_SECRET_KEY', '')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+# Used by the legacy Stripe-hosted CheckoutView; not required for embedded checkout.
+STRIPE_SUCCESS_URL    = os.environ.get('STRIPE_SUCCESS_URL', '')
+STRIPE_CANCEL_URL     = os.environ.get('STRIPE_CANCEL_URL', '')
+# ────────────────────────────────────────────────────────────────────────────
+
 RECAPTCHA_SITE_KEY   = os.environ.get('RECAPTCHA_SITE_KEY', '')
 RECAPTCHA_SECRET_KEY = os.environ.get('RECAPTCHA_SECRET_KEY', '')
 
@@ -122,6 +130,23 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+MEDIA_URL  = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'ERROR',
+    },
+}
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

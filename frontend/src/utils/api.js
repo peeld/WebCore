@@ -49,7 +49,7 @@ export const WSBASE = requireEnv('VITE_WS_URL',  import.meta.env.VITE_WS_URL)
  * Clears auth keys and hard-navigates to /login.
  */
 let _unauthorizedHandler = () => {
-  console.warn('[api.js] 401 received before AuthContext registered its handler — using fallback.')
+  captureWarning('401 received before AuthContext registered its handler — using fallback')
   ;['access', 'refresh', 'username', 'user_id'].forEach(k => localStorage.removeItem(k))
   window.location.href = '/login'
 }

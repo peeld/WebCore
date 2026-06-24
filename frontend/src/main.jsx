@@ -13,13 +13,17 @@ import { initLogger } from './utils/logger.js';
 
 initSentry();
 
-initLogger({
-  captureError,
-  captureWarning,
-  addBreadcrumb,
-  setUser:   setSentryUser,
-  clearUser: clearSentryUser,
-});
+// Only replace console fallbacks with Sentry handlers when Sentry is actually
+// initialised — otherwise captureError/captureWarning become silent no-ops.
+if (import.meta.env.VITE_ENV === 'production' && import.meta.env.VITE_SENTRY_DSN) {
+  initLogger({
+    captureError,
+    captureWarning,
+    addBreadcrumb,
+    setUser:   setSentryUser,
+    clearUser: clearSentryUser,
+  });
+}
 
 // Wrap children in each provider exported by installed modules.
 // The list is built inside-out so the first provider in the array is outermost.
