@@ -4,6 +4,7 @@ import Navbar from './components/Navbar.jsx';
 import AdminPage from './components/AdminPage.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import HomePage from './components/HomePage.jsx';
+import UserPage from './components/UserPage.jsx';
 import NotFoundPage from './components/NotFoundPage.jsx';
 
 export default function App() {
@@ -15,6 +16,7 @@ export default function App() {
         <ErrorBoundary>
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/dashboard" element={<UserPage />} />
             <Route path="/admin" element={<AdminPage />} />
             {moduleRoutes.map(r => (
               <Route key={r.path} path={r.path} element={r.element} />

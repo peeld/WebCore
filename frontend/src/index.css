@@ -9,3 +9,13 @@ body {
   display: flex;
   flex-direction: column;
 }
+
+:root {
+  --bulma-primary: hsl(210, 10%, 30%);       /* brand color */
+  --bulma-family-primary: "Inter", sans-serif; /* body font */
+}
+
+.navbar-item { color: white }
+.navbar-link { color: white }
+
+
