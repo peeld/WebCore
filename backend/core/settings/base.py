@@ -166,6 +166,24 @@ except ImportError:
 INSTALLED_APPS += INSTALLED_MODULE_APPS + MODULE_EXTRA_APPS
 MIDDLEWARE += MODULE_EXTRA_MIDDLEWARE
 
+STRIPE_SECRET_KEY     = os.environ.get('STRIPE_SECRET_KEY', '')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+STRIPE_SUCCESS_URL    = os.environ.get('STRIPE_SUCCESS_URL', '')
+STRIPE_CANCEL_URL     = os.environ.get('STRIPE_CANCEL_URL', '')
+
+# License verification (billing module)
+LICENSE_APP_SECRET = os.environ.get('LICENSE_APP_SECRET', '')
+
+_private_path = os.environ.get('LICENSE_RSA_PRIVATE_KEY_PATH', str(BASE_DIR / 'license_private.pem'))
+LICENSE_RSA_PRIVATE_KEY = open(_private_path).read() if _private_path else ''
+
+_public_path = os.environ.get('LICENSE_RSA_PUBLIC_KEY_PATH', str(BASE_DIR / 'license_public.pem'))
+LICENSE_RSA_PUBLIC_KEY = open(_public_path).read() if _public_path else ''
+
+LICENSE_DEFAULT_MAX_MACHINES = int(os.environ.get('LICENSE_DEFAULT_MAX_MACHINES', 1))
+LICENSE_DEFAULT_OFFLINE_TTL_DAYS  = int(os.environ.get('LICENSE_DEFAULT_OFFLINE_TTL_DAYS', 30))
+
+
 def _deep_merge_setting(existing, override):
     for key, val in override.items():
         if key in existing and isinstance(existing[key], dict) and isinstance(val, dict):

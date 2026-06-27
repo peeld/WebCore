@@ -10,7 +10,7 @@ export default function UserPage() {
         ) : (
           <div className="columns is-multiline">
             {moduleUserSections.map((Section, i) => (
-              <div key={i} className="column is-half">
+              <div key={i} className="column is-half is-flex">
                 <Section />
               </div>
             ))}

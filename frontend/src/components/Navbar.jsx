@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { moduleNavItems, moduleNavbarEnd } from '../modules.js';
+import { useAuth } from '@modules/userauth';
 
 /**
  * Top navigation bar. Module nav items are injected from the generated manifest.
@@ -8,6 +9,7 @@ import { moduleNavItems, moduleNavbarEnd } from '../modules.js';
  */
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { user } = useAuth();
 
   return (
     <nav className="navbar is-primary" role="navigation" aria-label="main navigation">
@@ -31,13 +33,15 @@ export default function Navbar() {
 
       <div className={`navbar-menu ${menuOpen ? 'is-active' : ''}`}>
         <div className="navbar-start">
-          <NavLink
-            to="/admin"
-            className={({ isActive }) => `navbar-item${isActive ? ' is-active' : ''}`}
-          >
-            Admin
-          </NavLink>
-          {moduleNavItems.map(item => (
+          {user?.is_staff && (
+            <NavLink
+              to="/admin"
+              className={({ isActive }) => `navbar-item${isActive ? ' is-active' : ''}`}
+            >
+              Admin
+            </NavLink>
+          )}
+          {moduleNavItems.filter(item => !item.requiresAuth || user).map(item => (
             <NavLink
               key={item.path}
               to={item.path}
