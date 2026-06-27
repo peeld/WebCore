@@ -35,6 +35,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 # Security headers
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_SSL_REDIRECT = True
@@ -53,7 +54,7 @@ LOGGING = {
     'handlers': {
         'file': {
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.environ.get('LOG_FILE', '/var/log/webtemplate/app.log'),
+            'filename': os.environ.get('LOG_FILE', '/var/log/beta.peeldev.com/app.log'),
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 5,
             'formatter': 'verbose',
