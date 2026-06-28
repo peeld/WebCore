@@ -3,12 +3,10 @@ Shared settings for all environments.
 Environment-specific files (development.py, production.py) import from here.
 """
 import os
-import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
 
-# BASE_DIR = core/backend/
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 REPO_ROOT = BASE_DIR.parent.parent  # core/backend -> core -> repo root
 

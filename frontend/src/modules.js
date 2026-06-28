@@ -2,7 +2,6 @@
 
 import * as billingModule from '@modules/billing';
 import * as fileuploadModule from '@modules/fileupload';
-import * as helloworldModule from '@modules/helloworld';
 import * as orgsModule from '@modules/orgs';
 import * as supportModule from '@modules/support';
 import * as userauthModule from '@modules/userauth';
@@ -10,7 +9,6 @@ import * as userauthModule from '@modules/userauth';
 export const moduleRoutes = [
   ...(billingModule.routes ?? []),
   ...(fileuploadModule.routes ?? []),
-  ...(helloworldModule.routes ?? []),
   ...(orgsModule.routes ?? []),
   ...(supportModule.routes ?? []),
   ...(userauthModule.routes ?? []),
@@ -19,7 +17,6 @@ export const moduleRoutes = [
 export const moduleNavItems = [
   ...(billingModule.navItems ?? []),
   ...(fileuploadModule.navItems ?? []),
-  ...(helloworldModule.navItems ?? []),
   ...(orgsModule.navItems ?? []),
   ...(supportModule.navItems ?? []),
   ...(userauthModule.navItems ?? []),
@@ -28,7 +25,6 @@ export const moduleNavItems = [
 export const moduleProviders = [
   ...(billingModule.providers ?? []),
   ...(fileuploadModule.providers ?? []),
-  ...(helloworldModule.providers ?? []),
   ...(orgsModule.providers ?? []),
   ...(supportModule.providers ?? []),
   ...(userauthModule.providers ?? []),
@@ -37,7 +33,6 @@ export const moduleProviders = [
 export const moduleNavbarEnd = [
   ...(billingModule.navbarEnd ?? []),
   ...(fileuploadModule.navbarEnd ?? []),
-  ...(helloworldModule.navbarEnd ?? []),
   ...(orgsModule.navbarEnd ?? []),
   ...(supportModule.navbarEnd ?? []),
   ...(userauthModule.navbarEnd ?? []),
@@ -46,7 +41,6 @@ export const moduleNavbarEnd = [
 export const moduleAdminCards = [
   ...(billingModule.adminCards ?? []),
   ...(fileuploadModule.adminCards ?? []),
-  ...(helloworldModule.adminCards ?? []),
   ...(orgsModule.adminCards ?? []),
   ...(supportModule.adminCards ?? []),
   ...(userauthModule.adminCards ?? []),
@@ -55,7 +49,6 @@ export const moduleAdminCards = [
 export const moduleUserSections = [
   ...(billingModule.userSections ?? []),
   ...(fileuploadModule.userSections ?? []),
-  ...(helloworldModule.userSections ?? []),
   ...(orgsModule.userSections ?? []),
   ...(supportModule.userSections ?? []),
   ...(userauthModule.userSections ?? []),
@@ -64,7 +57,6 @@ export const moduleUserSections = [
 export const moduleHomeSections = [
   ...(billingModule.homeSections ?? []),
   ...(fileuploadModule.homeSections ?? []),
-  ...(helloworldModule.homeSections ?? []),
   ...(orgsModule.homeSections ?? []),
   ...(supportModule.homeSections ?? []),
   ...(userauthModule.homeSections ?? []),

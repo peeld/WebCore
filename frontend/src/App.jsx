@@ -29,7 +29,7 @@ export default function App() {
 
       <footer className="footer">
         <div className="content has-text-centered">
-          <p>WebTemplate</p>
+          <p>---</p>
         </div>
       </footer>
     </div>
