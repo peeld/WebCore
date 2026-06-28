@@ -10,9 +10,11 @@ from dotenv import load_dotenv
 
 # BASE_DIR = core/backend/
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+REPO_ROOT = BASE_DIR.parent.parent  # core/backend -> core -> repo root
 
-# Load .env for local development; no-op when file is absent (production uses real env vars).
-load_dotenv(BASE_DIR / '.env')
+# Production: .env lives one level above the repo (outside rsync target).
+# Local dev: falls back to core/backend/.env.
+load_dotenv(REPO_ROOT.parent / '.env') or load_dotenv(BASE_DIR / '.env')
 
 # Required -- fail loudly if missing rather than running with an unsafe default.
 SECRET_KEY = os.environ['SECRET_KEY']
@@ -94,14 +96,6 @@ SIMPLE_JWT = {
 
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
 
-# ── Billing module (Stripe) ──────────────────────────────────────────────────
-STRIPE_SECRET_KEY     = os.environ.get('STRIPE_SECRET_KEY', '')
-STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
-# Used by the legacy Stripe-hosted CheckoutView; not required for embedded checkout.
-STRIPE_SUCCESS_URL    = os.environ.get('STRIPE_SUCCESS_URL', '')
-STRIPE_CANCEL_URL     = os.environ.get('STRIPE_CANCEL_URL', '')
-# ────────────────────────────────────────────────────────────────────────────
-
 RECAPTCHA_SITE_KEY   = os.environ.get('RECAPTCHA_SITE_KEY', '')
 RECAPTCHA_SECRET_KEY = os.environ.get('RECAPTCHA_SECRET_KEY', '')
 
@@ -165,23 +159,6 @@ except ImportError:
 
 INSTALLED_APPS += INSTALLED_MODULE_APPS + MODULE_EXTRA_APPS
 MIDDLEWARE += MODULE_EXTRA_MIDDLEWARE
-
-STRIPE_SECRET_KEY     = os.environ.get('STRIPE_SECRET_KEY', '')
-STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
-STRIPE_SUCCESS_URL    = os.environ.get('STRIPE_SUCCESS_URL', '')
-STRIPE_CANCEL_URL     = os.environ.get('STRIPE_CANCEL_URL', '')
-
-# License verification (billing module)
-LICENSE_APP_SECRET = os.environ.get('LICENSE_APP_SECRET', '')
-
-_private_path = os.environ.get('LICENSE_RSA_PRIVATE_KEY_PATH', str(BASE_DIR / 'license_private.pem'))
-LICENSE_RSA_PRIVATE_KEY = open(_private_path).read() if _private_path else ''
-
-_public_path = os.environ.get('LICENSE_RSA_PUBLIC_KEY_PATH', str(BASE_DIR / 'license_public.pem'))
-LICENSE_RSA_PUBLIC_KEY = open(_public_path).read() if _public_path else ''
-
-LICENSE_DEFAULT_MAX_MACHINES = int(os.environ.get('LICENSE_DEFAULT_MAX_MACHINES', 1))
-LICENSE_DEFAULT_OFFLINE_TTL_DAYS  = int(os.environ.get('LICENSE_DEFAULT_OFFLINE_TTL_DAYS', 30))
 
 
 def _deep_merge_setting(existing, override):
