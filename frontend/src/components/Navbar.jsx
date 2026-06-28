@@ -15,7 +15,7 @@ export default function Navbar() {
     <nav className="navbar is-primary" role="navigation" aria-label="main navigation">
       <div className="navbar-brand">
         <NavLink className="navbar-item" to="/">
-          <strong>WebTemplate</strong>
+          <strong>PeelDev</strong>
         </NavLink>
         <a
           role="button"
