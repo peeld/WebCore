@@ -1,4 +1,15 @@
+import { useState } from 'react';
 import { moduleUserSections } from '../modules.js';
+
+function SectionColumn({ Section }) {
+  const [visible, setVisible] = useState(true);
+  if (!visible) return null;
+  return (
+    <div className="column is-half is-flex">
+      <Section onEmpty={() => setVisible(false)} />
+    </div>
+  );
+}
 
 export default function UserPage() {
   return (
@@ -10,9 +21,9 @@ export default function UserPage() {
         ) : (
           <div className="columns is-multiline">
             {moduleUserSections.map((Section, i) => (
-              <div key={i} className="column is-half is-flex">
-                <Section />
-              </div>
+                <>
+              <SectionColumn key={i} Section={Section} />
+              </>
             ))}
           </div>
         )}
