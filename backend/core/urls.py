@@ -42,6 +42,9 @@ def _module_urlpatterns():
     return patterns
 
 
+handler404 = 'core.error_handlers.handler404'
+handler500 = 'core.error_handlers.handler500'
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('core_app.urls')),
