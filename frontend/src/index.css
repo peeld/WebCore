@@ -48,3 +48,9 @@ body {
 body {
   font-family: "Varela Round", sans-serif;
 }
+
+.is-shrinkable .level-left,
+.is-shrinkable .level-right,
+.is-shrinkable .level-item {
+  flex-shrink: 1;
+}
