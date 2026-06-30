@@ -4,6 +4,8 @@ import { moduleNavItems, moduleNavbarEnd } from '../modules.js';
 import { useAuth } from '@modules/userauth';
 import './Navbar.css';
 
+export const NAV_ICON = import.meta.env.VITE_NAV_ICON ?? null
+
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { user } = useAuth();
@@ -38,7 +40,14 @@ export default function Navbar() {
     <nav className="navbar is-primary" role="navigation" aria-label="main navigation">
       <div className="navbar-brand" ref={brandRef}>
         <NavLink className="navbar-item" to="/">
-          <strong>PeelDev</strong>
+
+            { NAV_ICON ? (
+              <img src={NAV_ICON} alt="" />
+            ) : (
+               <strong>PeelDev</strong>
+            ) }
+
+
         </NavLink>
         <a
           role="button"
@@ -54,7 +63,7 @@ export default function Navbar() {
         </a>
 
         {menuOpen && (
-          <div className="navbar-mobile-dropdown" role="menu">
+          <div className="navbar-mobile-dropdown" role="menu" onClick={() => setMenuOpen(false)}>
             {navLinks.map(item => (
               <NavLink
                 key={item.path}
@@ -62,7 +71,6 @@ export default function Navbar() {
                 className={({ isActive }) =>
                   `navbar-mobile-item${isActive ? ' is-active' : ''}`
                 }
-                onClick={() => setMenuOpen(false)}
               >
                 {item.label}
               </NavLink>

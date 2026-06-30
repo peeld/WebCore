@@ -44,3 +44,7 @@ body {
     display: inline;
   }
 }
+
+body {
+  font-family: "Varela Round", sans-serif;
+}
