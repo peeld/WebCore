@@ -1,0 +1,47 @@
+.navbar-brand {
+  position: relative;
+}
+
+.navbar-mobile-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  min-width: 210px;
+  background: #ffffff;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.07);
+  z-index: 100;
+  padding: 0.375rem 0;
+}
+
+.navbar-mobile-item {
+  display: block;
+  padding: 0.6rem 1.25rem;
+  color: #363636;
+  font-size: 1rem;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.1s;
+}
+
+.navbar-mobile-item:hover {
+  background-color: #f5f5f5;
+  color: #363636;
+}
+
+.navbar-mobile-item.is-active {
+  background-color: #f0f0f0;
+  color: #363636;
+  font-weight: 600;
+}
+
+.navbar-mobile-divider {
+  height: 1px;
+  background-color: #ededed;
+  margin: 0.375rem 0;
+  border: none;
+}
+
+.navbar-mobile-end-item {
+  padding: 0.4rem 0.75rem;
+}
