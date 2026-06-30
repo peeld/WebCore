@@ -11,7 +11,7 @@ export const SITE_ICON = import.meta.env.VITE_APP_ICON ?? null
 export default function SiteLogo({ className = '', style = {} }) {
   return (
     <span className={`has-text-weight-bold ${className}`} style={style}>
-      {SITE_ICON && <span className="mr-1">{SITE_ICON}</span>}
+      {SITE_ICON && <p><img src={SITE_ICON} /></p>}
       {SITE_NAME}
     </span>
   )
