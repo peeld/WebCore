@@ -1,17 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { moduleUserSections } from '../modules.js';
 
-function SectionColumn({ Section }) {
-  const [visible, setVisible] = useState(true);
-  if (!visible) return null;
-  return (
-    <div className="column is-half is-flex">
-      <Section onEmpty={() => setVisible(false)} />
-    </div>
-  );
-}
-
 export default function UserPage() {
+  const [visible, setVisible] = useState(() =>
+    moduleUserSections.map(s => !s.load)
+  );
+
+  useEffect(() => {
+    moduleUserSections.forEach(({ load }, i) => {
+      if (!load) return;
+      load()
+        .then(result => setVisible(prev => prev.map((v, j) => j === i ? !!result : v)))
+        .catch(() => setVisible(prev => prev.map((v, j) => j === i ? false : v)));
+    });
+  }, []);
+
   return (
     <section className="section">
       <div className="container">
@@ -20,11 +23,13 @@ export default function UserPage() {
           <p className="has-text-grey">No modules have registered account sections.</p>
         ) : (
           <div className="columns is-multiline">
-            {moduleUserSections.map((Section, i) => (
-                <>
-              <SectionColumn key={i} Section={Section} />
-              </>
-            ))}
+            {moduleUserSections.map(({ component: Section }, i) =>
+              visible[i] ? (
+                <div key={i} className="column is-half is-flex">
+                  <Section />
+                </div>
+              ) : null
+            )}
           </div>
         )}
       </div>
