@@ -63,9 +63,9 @@ export default function Navbar() {
         </a>
 
         {menuOpen && (
-          <div className="navbar-mobile-dropdown" role="menu" onClick={() => setMenuOpen(false)}>
+          <div className="navbar-mobile-dropdown has-text-centered" role="menu" onClick={() => setMenuOpen(false)}>
             {navLinks.map(item => (
-              <NavLink
+               <NavLink
                 key={item.path}
                 to={item.path}
                 className={({ isActive }) =>

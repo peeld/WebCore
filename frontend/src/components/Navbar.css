@@ -6,8 +6,7 @@
   position: absolute;
   top: 100%;
   right: 0;
-  min-width: 210px;
-  background: #ffffff;
+  min-width: 170px;
   border-radius: 6px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.07);
   z-index: 100;
@@ -16,12 +15,15 @@
 
 .navbar-mobile-item {
   display: block;
-  padding: 0.6rem 1.25rem;
+  padding: 0.6rem 0.5rem;
+  background: #ffffff;
+  margin: 1rem;
   color: #363636;
   font-size: 1rem;
   text-decoration: none;
   white-space: nowrap;
   transition: background 0.1s;
+  border-radius: 10px;
 }
 
 .navbar-mobile-item:hover {
@@ -44,4 +46,29 @@
 
 .navbar-mobile-end-item {
   padding: 0.4rem 0.75rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .navbar-mobile-dropdown {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  }
+
+  .navbar-mobile-item {
+    background: #2a2a2a;
+    color: #f5f5f5;
+  }
+
+  .navbar-mobile-item:hover {
+    background-color: #3a3a3a;
+    color: #f5f5f5;
+  }
+
+  .navbar-mobile-item.is-active {
+    background-color: #333333;
+    color: #f5f5f5;
+  }
+
+  .navbar-mobile-divider {
+    background-color: #444444;
+  }
 }
