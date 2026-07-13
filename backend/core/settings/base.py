@@ -4,7 +4,7 @@ Environment-specific files (development.py, production.py) import from here.
 """
 import os
 from pathlib import Path
-
+from datetime import timedelta
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -92,7 +92,6 @@ REST_FRAMEWORK = {
     ]
 }
 
-from datetime import timedelta
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME':  timedelta(hours=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
