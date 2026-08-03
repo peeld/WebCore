@@ -1,0 +1,19 @@
+.admin-sidebar {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .admin-sidebar {
+    display: block;
+    width: 220px;
+    flex: none;
+    padding: 1.5rem 1rem;
+    border-right: 1px solid #ededed;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .admin-sidebar {
+    border-right-color: #333;
+  }
+}
