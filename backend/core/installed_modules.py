@@ -28,6 +28,7 @@ MODULE_SETTINGS         = {
     'ACCOUNT_EMAIL_VERIFICATION': 'none',
     'REST_AUTH': {'USE_JWT': True, 'JWT_AUTH_COOKIE': None, 'TOKEN_MODEL': None},
     'EMAIL_BACKEND': 'django_ses.SESBackend',
+    'RECAPTCHA_API_KEY': os.environ.get('RECAPTCHA_API_KEY', ''),
     'RECAPTCHA_SITE_KEY': os.environ.get('RECAPTCHA_SITE_KEY', ''),
     'RECAPTCHA_SECRET_KEY': os.environ.get('RECAPTCHA_SECRET_KEY', ''),
     'RECAPTCHA_PROJECT_ID': os.environ.get('RECAPTCHA_PROJECT_ID', ''),
