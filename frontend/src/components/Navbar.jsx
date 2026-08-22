@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { NavLink } from 'react-router-dom';
 import { moduleNavItems, moduleNavbarEnd } from '../modules.js';
 import { useAuth } from '@modules/userauth';
+import { SITE_NAME } from './SiteLogo.jsx';
 import './Navbar.css';
 
 export const NAV_ICON = import.meta.env.VITE_NAV_ICON ?? null
@@ -44,7 +45,7 @@ export default function Navbar() {
             { NAV_ICON ? (
               <img src={NAV_ICON} alt="" />
             ) : (
-               <strong>PeelDev</strong>
+               <strong>{SITE_NAME}</strong>
             ) }
 
 

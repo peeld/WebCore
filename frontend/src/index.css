@@ -1,4 +1,7 @@
-/* Global baseline — Bulma handles the rest. */
+/* Global baseline — Bulma handles the rest.
+   Brand color/font/navbar colors live in site/frontend/theme.css, not here —
+   this file must stay generic so core is reusable across sites. */
+@import "../../../site/frontend/theme.css";
 
 body {
   margin: 0;
@@ -9,15 +12,6 @@ body {
   display: flex;
   flex-direction: column;
 }
-
-:root {
-  --bulma-primary: hsl(210, 10%, 30%);       /* brand color */
-  --bulma-family-primary: "Inter", sans-serif; /* body font */
-}
-
-.navbar-item { color: white }
-.navbar-link { color: white }
-.navbar-burger { color: #ccc }
 
 .site-logo-icon-dark {
   display: none;
@@ -43,10 +37,6 @@ body {
   .site-logo-icon-dark {
     display: inline;
   }
-}
-
-body {
-  font-family: "Varela Round", sans-serif;
 }
 
 .is-shrinkable .level-left,
