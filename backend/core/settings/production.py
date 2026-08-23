@@ -1,6 +1,6 @@
 """Production settings — PostgreSQL, Sentry, rotating file log, strict security."""
 import logging
-import os
+from core.secrets import SECRETS
 from .base import *  # noqa: F401, F403
 
 DEBUG = False
@@ -8,16 +8,16 @@ DEBUG = False
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ['DB_NAME'],
-        'USER': os.environ['DB_USER'],
-        'PASSWORD': os.environ['DB_PASSWORD'],
-        'HOST': os.environ.get('DB_HOST', 'localhost'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
+        'NAME': SECRETS.DB_NAME,
+        'USER': SECRETS.DB_USER,
+        'PASSWORD': SECRETS.DB_PASSWORD,
+        'HOST': SECRETS.get('DB_HOST', 'localhost'),
+        'PORT': SECRETS.get('DB_PORT', '5432'),
     }
 }
 
 # Sentry — optional; silently skipped if DSN is not set.
-_sentry_dsn = os.environ.get('SENTRY_DSN')
+_sentry_dsn = SECRETS.get('SENTRY_DSN')
 if _sentry_dsn:
     import sentry_sdk
     from sentry_sdk.integrations.logging import LoggingIntegration
@@ -30,9 +30,7 @@ if _sentry_dsn:
         ],
     )
 
-CORS_ALLOWED_ORIGINS = [
-    o.strip() for o in os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',') if o.strip()
-]
+CORS_ALLOWED_ORIGINS = SECRETS.get('CORS_ALLOWED_ORIGINS', [])
 
 # Security headers
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -54,7 +52,7 @@ LOGGING = {
     'handlers': {
         'file': {
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.environ.get('LOG_FILE', '/var/log/beta.peeldev.com/app.log'),
+            'filename': SECRETS.get('LOG_FILE', '/var/log/beta.peeldev.com/app.log'),
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 5,
             'formatter': 'verbose',

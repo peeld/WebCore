@@ -24,6 +24,10 @@ backend/core/installed_modules.py
 .env.production
 .env.local
 
+# Backend secrets — see core/backend/core/secrets.py. Committed:
+# secrets.json.example. Never committed: secrets.json.
+backend/secrets.json
+
 # Node
 node_modules/
 dist/

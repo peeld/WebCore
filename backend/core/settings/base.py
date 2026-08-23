@@ -2,24 +2,20 @@
 Shared settings for all environments.
 Environment-specific files (development.py, production.py) import from here.
 """
-import os
 from pathlib import Path
 from datetime import timedelta
-from dotenv import load_dotenv
+from core.secrets import SECRETS
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 REPO_ROOT = BASE_DIR.parent.parent  # core/backend -> core -> repo root
 
-# Production: .env lives one level above the repo (outside rsync target).
-# Local dev: falls back to core/backend/.env.
-load_dotenv(REPO_ROOT.parent / '.env') or load_dotenv(BASE_DIR / '.env')
-
-# Required -- fail loudly if missing rather than running with an unsafe default.
-SECRET_KEY = os.environ['SECRET_KEY']
+# Required -- fails loudly at import time (see core/secrets.py) rather than
+# running with an unsafe default.
+SECRET_KEY = SECRETS.SECRET_KEY
 
 DEBUG = False  # Always overridden by environment settings.
 
-ALLOWED_HOSTS = [h.strip() for h in os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')]
+ALLOWED_HOSTS = SECRETS.get('ALLOWED_HOSTS', ['localhost', '127.0.0.1'])
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -98,17 +94,17 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS':  True,
 }
 
-FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
+FRONTEND_URL = SECRETS.get('FRONTEND_URL', 'http://localhost:5173')
 
-RECAPTCHA_API_KEY    = os.environ.get('RECAPTCHA_API_KEY', '')
-RECAPTCHA_SITE_KEY   = os.environ.get('RECAPTCHA_SITE_KEY', '')
-RECAPTCHA_SECRET_KEY = os.environ.get('RECAPTCHA_SECRET_KEY', '')
+RECAPTCHA_API_KEY    = SECRETS.get('RECAPTCHA_API_KEY', '')
+RECAPTCHA_SITE_KEY   = SECRETS.get('RECAPTCHA_SITE_KEY', '')
+RECAPTCHA_SECRET_KEY = SECRETS.get('RECAPTCHA_SECRET_KEY', '')
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'APP': {
-            'client_id': os.environ.get('GOOGLE_CLIENT_ID', ''),
-            'secret':    os.environ.get('GOOGLE_CLIENT_SECRET', ''),
+            'client_id': SECRETS.get('GOOGLE_CLIENT_ID', ''),
+            'secret':    SECRETS.get('GOOGLE_CLIENT_SECRET', ''),
             'key':       '',
         },
         'SCOPE': ['profile', 'email'],
@@ -116,11 +112,11 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-AWS_SES_ACCESS_KEY     = os.environ.get('AWS_SES_ACCESS_KEY', '')
-AWS_SES_SECRET_KEY     = os.environ.get('AWS_SES_SECRET_KEY', '')
-AWS_SES_REGION_NAME   = os.environ.get('AWS_SES_REGION_NAME', 'us-east-1')
+AWS_SES_ACCESS_KEY     = SECRETS.get('AWS_SES_ACCESS_KEY', '')
+AWS_SES_SECRET_KEY     = SECRETS.get('AWS_SES_SECRET_KEY', '')
+AWS_SES_REGION_NAME   = SECRETS.get('AWS_SES_REGION_NAME', 'us-east-1')
 AWS_SES_REGION_ENDPOINT = f'email.{AWS_SES_REGION_NAME}.amazonaws.com'
-DEFAULT_FROM_EMAIL    = os.environ.get('DEFAULT_FROM_EMAIL', '')
+DEFAULT_FROM_EMAIL    = SECRETS.get('DEFAULT_FROM_EMAIL', '')
 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
