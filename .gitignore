@@ -6,6 +6,11 @@ backend/*/
 # Site branding — symlinked in from ../site/frontend/public by install.py
 frontend/public
 
+# Per-module frontend symlinks -- created by install.py for each module
+# listed in modules.json (repo root). Backs the "modules/*" npm workspaces
+# glob in frontend/package.json.
+frontend/modules/
+
 *.pem
 *.log
 
