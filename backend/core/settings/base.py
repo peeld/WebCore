@@ -121,7 +121,7 @@ AWS_SES_REGION_ENDPOINT = f'email.{AWS_SES_REGION_NAME}.amazonaws.com'
 DEFAULT_FROM_EMAIL    = SECRETS.get('DEFAULT_FROM_EMAIL', '')
 
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Los_Angeles'
 USE_I18N = True
 USE_TZ = True
 
