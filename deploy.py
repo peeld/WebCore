@@ -192,6 +192,18 @@ def _check_enabled_modules_present():
         _die(f"modules.json lists module(s) not found under modules/: {', '.join(missing)}")
 
 
+def _load_frontend_sentry_dsn():
+    """SENTRY_DSN_FRONTEND lives in secrets.production.json (repo root, never
+    committed) alongside SENTRY_DSN_BACKEND, not in deploy.env -- one file
+    holds both Sentry DSNs. Returns '' if the file or key isn't present yet
+    (e.g. a first deploy before --sync-secrets has ever been run).
+    """
+    if not SECRETS_FILE.exists():
+        return ""
+    with SECRETS_FILE.open() as f:
+        return json.load(f).get("SENTRY_DSN_FRONTEND", "")
+
+
 def _load_deploy_env():
     if not DEPLOY_ENV.exists():
         _die(f"{DEPLOY_ENV.name} not found. Copy deploy.env.example to deploy.env and fill it in.")
@@ -456,7 +468,6 @@ VITE_WS_URL="wss://{config['DOMAIN']}" \\
 VITE_RECAPTCHA_SITE_KEY="{config['RECAPTCHA_SITE_KEY']}" \\
 VITE_GOOGLE_CLIENT_ID="{config['GOOGLE_CLIENT_ID']}" \\
 VITE_STRIPE_PUBLISHABLE_KEY="{config.get('STRIPE_PUBLISHABLE_KEY', '')}" \\
-VITE_SENTRY_DSN="{config.get('SENTRY_DSN', '')}" \\
 VITE_RELEASE_VERSION="{release_version}" \\
 VITE_APP_NAME="{config['APP_NAME']}" \\
 VITE_APP_ICON="{config.get('APP_ICON', '')}" \\
@@ -580,6 +591,7 @@ def main():
         required_tools.append("scp")
     _require_tools(*required_tools)
     config = _load_deploy_env()
+    config["SENTRY_DSN_FRONTEND"] = _load_frontend_sentry_dsn()
     _check_enabled_modules_present()
 
     release_version = _determine_release_version()

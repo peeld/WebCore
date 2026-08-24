@@ -17,7 +17,7 @@ DATABASES = {
 }
 
 # Sentry — optional; silently skipped if DSN is not set.
-_sentry_dsn = SECRETS.get('SENTRY_DSN')
+_sentry_dsn = SECRETS.get('SENTRY_DSN_BACKEND')
 if _sentry_dsn:
     import sentry_sdk
     from sentry_sdk.integrations.logging import LoggingIntegration
