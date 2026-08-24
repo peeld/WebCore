@@ -35,6 +35,7 @@ adds a new required key) has secrets.json in place before migrate runs.
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -215,7 +216,7 @@ def _load_deploy_env():
     return config
 
 
-def confirm(config, dry_run, sync_secrets_flag):
+def confirm(config, dry_run, sync_secrets_flag, release_version):
     branch = _capture(TOOLS["git"], "rev-parse", "--abbrev-ref", "HEAD", cwd=ROOT_DIR)
     commit = _capture(TOOLS["git"], "rev-parse", "--short", "HEAD", cwd=ROOT_DIR)
     dirty = _capture(TOOLS["git"], "status", "--porcelain", cwd=ROOT_DIR)
@@ -224,6 +225,7 @@ def confirm(config, dry_run, sync_secrets_flag):
 
     print("--- Deploy summary ---")
     print(f"  Local branch/commit : {branch} @ {commit}{' (dirty)' if dirty else ''}")
+    print(f"  Release version     : {release_version}")
     print(f"  Modules             : {', '.join(modules) if modules else '(none)'}")
     print(f"  Target              : {config['SERVER_USER']}@{config['SERVER_IP']}:{config['APP_DIR']}")
     print(f"  Domain              : https://{config['DOMAIN']}")
@@ -240,10 +242,114 @@ def confirm(config, dry_run, sync_secrets_flag):
     answer = input("Proceed with deploy? [y/N] ").strip().lower()
     if answer != "y":
         _die("Aborted.")
-    return commit
+
+
+def _main_branch_ref():
+    """Best-effort resolution of the repo's main branch name, used as the
+    version fallback below. Tries the remote's default branch first
+    (origin/HEAD), then common local branch names -- this repo's default
+    branch is locally named "master" even though "main" is the assumed
+    convention elsewhere, so both are checked rather than hardcoding one.
+    """
+    result = subprocess.run(
+        [TOOLS["git"], "symbolic-ref", "--short", "refs/remotes/origin/HEAD"],
+        cwd=ROOT_DIR, capture_output=True, text=True,
+    )
+    if result.returncode == 0 and result.stdout.strip():
+        return result.stdout.strip()
+    for candidate in ("main", "master"):
+        check = subprocess.run(
+            [TOOLS["git"], "rev-parse", "--verify", "--quiet", candidate],
+            cwd=ROOT_DIR, capture_output=True, text=True,
+        )
+        if check.returncode == 0:
+            return candidate
+    _die("Could not determine the main branch (no origin/HEAD, no local main/master).")
+
+
+def _determine_release_version():
+    """Prefer an explicit version tag pointing at the current commit --
+    VITE_RELEASE_VERSION should read as a real version when one exists.
+    Otherwise fall back to the main branch's SHA rather than whatever's
+    currently checked out, since a deploy can be run from a hotfix/feature
+    branch but the release version should still track main.
+    """
+    tag = subprocess.run(
+        [TOOLS["git"], "describe", "--tags", "--exact-match", "HEAD"],
+        cwd=ROOT_DIR, capture_output=True, text=True,
+    )
+    if tag.returncode == 0 and tag.stdout.strip():
+        return tag.stdout.strip()
+    main_ref = _main_branch_ref()
+    return _capture(TOOLS["git"], "rev-parse", "--short", main_ref, cwd=ROOT_DIR)
+
+
+def _check_submodules_committed():
+    """Refuse to deploy instead of silently discarding local submodule
+    state. `git submodule update` checks out each submodule to the commit
+    SHA recorded in the superproject's index -- if a submodule's working
+    copy is on a different commit, has uncommitted changes, or has an
+    unresolved conflict, `update` would blow that away without asking.
+    A deploy should ship exactly what's committed, so require the user to
+    commit (or reset) the submodule(s) -- and update the superproject's
+    recorded pointer via `git add <path> && git commit` -- themselves.
+    """
+    print("--- Checking submodule state ---")
+    status_out = _capture(TOOLS["git"], "submodule", "status", "--recursive", cwd=ROOT_DIR)
+
+    out_of_sync = []
+    conflicted = []
+    for line in status_out.splitlines():
+        stripped = line.lstrip()
+        if not stripped:
+            continue
+        flag, rest = stripped[0], stripped[1:].split()
+        path = rest[1] if len(rest) > 1 else "?"
+        if flag == "+":
+            out_of_sync.append(path)
+        elif flag == "U":
+            conflicted.append(path)
+        # '-' (uninitialized) and ' ' (in sync) are both fine to proceed with.
+
+    foreach_out = _capture(
+        TOOLS["git"], "submodule", "foreach", "--recursive", "git status --porcelain",
+        cwd=ROOT_DIR,
+    )
+    dirty = []
+    current = None
+    for line in foreach_out.splitlines():
+        m = re.match(r"Entering '(.+)'", line)
+        if m:
+            current = m.group(1)
+            continue
+        if line.strip() and current and current not in dirty:
+            dirty.append(current)
+
+    problems = []
+    if out_of_sync:
+        problems.append(
+            "checked out commit differs from what's committed in the superproject: "
+            + ", ".join(out_of_sync)
+        )
+    if dirty:
+        problems.append("uncommitted changes: " + ", ".join(dirty))
+    if conflicted:
+        problems.append("unresolved merge conflicts: " + ", ".join(conflicted))
+
+    if problems:
+        _die(
+            "Submodule(s) are not in a clean, committed state -- refusing to deploy "
+            "(this would otherwise silently check them out to the last committed "
+            "reference, discarding the local state):\n  "
+            + "\n  ".join(problems)
+            + "\nCommit or reset the submodule(s), then `git add <path> && git commit` "
+            "in the superproject to record the pointer, before deploying."
+        )
+    print("  All submodules clean and in sync.")
 
 
 def sync_submodules():
+    _check_submodules_committed()
     print("--- Syncing submodules ---")
     _run(TOOLS["git"], "submodule", "update", "--init", "--recursive", cwd=ROOT_DIR)
 
@@ -476,10 +582,9 @@ def main():
     config = _load_deploy_env()
     _check_enabled_modules_present()
 
-    if args.yes:
-        release_version = _capture(TOOLS["git"], "rev-parse", "--short", "HEAD", cwd=ROOT_DIR)
-    else:
-        release_version = confirm(config, args.dry_run, args.sync_secrets)
+    release_version = _determine_release_version()
+    if not args.yes:
+        confirm(config, args.dry_run, args.sync_secrets, release_version)
 
     sync_submodules()
 

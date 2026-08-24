@@ -55,3 +55,6 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+frontend/src/enabledModules.js
+frontend/src/modules.js
