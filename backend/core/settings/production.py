@@ -40,6 +40,8 @@ SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 
+STRIPE_SECRET_KEY = SECRETS.STRIPE_SECRET_KEY
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

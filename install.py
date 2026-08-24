@@ -16,7 +16,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT_DIR         = Path(__file__).resolve().parent
+ROOT_DIR         = Path(__file__).resolve().parent.parent
 MODULES_DIR      = ROOT_DIR / "modules"
 SITE_DIR         = ROOT_DIR / "site"
 BACKEND_DIR      = ROOT_DIR / "core" / "backend"
@@ -106,7 +106,7 @@ def _load_enabled_modules():
     dependency checks, generate_manifest, and generate_installed_modules.
     """
     if not MODULES_MANIFEST.exists():
-        _die(f'{MODULES_MANIFEST.name} not found at repo root. Create it, e.g. {{"modules": []}}.')
+        _die(f'{MODULES_MANIFEST} not found. Create it, e.g. {{"modules": []}}.')
     with MODULES_MANIFEST.open() as f:
         data = json.load(f)
     return list(data.get("modules", []))

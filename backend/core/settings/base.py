@@ -9,6 +9,8 @@ from core.secrets import SECRETS
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 REPO_ROOT = BASE_DIR.parent.parent  # core/backend -> core -> repo root
 
+APP_NAME = SECRETS.APP_NAME
+
 # Required -- fails loudly at import time (see core/secrets.py) rather than
 # running with an unsafe default.
 SECRET_KEY = SECRETS.SECRET_KEY
