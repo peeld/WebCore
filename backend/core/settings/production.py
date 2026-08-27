@@ -42,6 +42,12 @@ CSRF_COOKIE_SECURE = True
 
 STRIPE_SECRET_KEY = SECRETS.get("STRIPE_SECRET_KEY", "")
 
+# Default lives inside the app dir (already owned/writable by the deploy
+# user) rather than /var/log, so a missing LOG_FILE secret can't crash
+# startup with "Unable to configure handler 'file'".
+_LOG_FILE = Path(SECRETS.get('LOG_FILE') or (BASE_DIR / 'logs' / 'app.log'))
+_LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -54,7 +60,7 @@ LOGGING = {
     'handlers': {
         'file': {
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': SECRETS.get('LOG_FILE', '/var/log/beta.peeldev.com/app.log'),
+            'filename': str(_LOG_FILE),
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 5,
             'formatter': 'verbose',
