@@ -4,9 +4,13 @@
 from django.dispatch import Signal
 
 # Sent by billing when a payment succeeds and a license should be granted.
+# Each send creates its own license credit — sends are not merged together.
 # kwargs: user (User instance), product_id (int), price_id (int),
-#         days_granted (int, optional — one-time purchase length; stacks expiry),
-#         stripe_payment_intent_id (str, optional),
+#         days_granted (int, optional — one-time purchase length, sets this
+#                       credit's expiry),
+#         stripe_payment_intent_id (str, optional — for webhook-retry idempotency),
+#         grant_index (int, optional — index within a quantity > 1 purchase, so
+#                      each unit becomes its own credit),
 #         subscription_id (int, optional — local billing.Subscription pk; set for
 #                          subscription grants so the license links to the sub)
 license_grant_requested = Signal()
