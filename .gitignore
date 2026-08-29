@@ -58,4 +58,4 @@ Thumbs.db
 
 frontend/src/enabledModules.js
 frontend/src/modules.js
-frontent/package.lock
+frontent/package-lock.json
