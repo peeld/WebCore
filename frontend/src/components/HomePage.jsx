@@ -4,7 +4,7 @@ export default function HomePage() {
   return (
     <>
       {moduleHomeSections.map((Section, i) => (
-        <Section key={i} />
+        <Section key={`module-${i}`} />
       ))}
     </>
   );

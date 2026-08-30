@@ -201,6 +201,23 @@ STRIPE_WEBHOOK_SECRET  = SECRETS.get('STRIPE_WEBHOOK_SECRET', '')
 STRIPE_SUCCESS_URL     = SECRETS.get('STRIPE_SUCCESS_URL', '')
 STRIPE_CANCEL_URL      = SECRETS.get('STRIPE_CANCEL_URL', '')
 
+# billing (Shippo — shipping rates/labels for physical products)
+SHIPPO_API_KEY        = SECRETS.get('SHIPPO_API_KEY', '')
+SHIPPO_FROM_NAME       = SECRETS.get('SHIPPO_FROM_NAME', '')
+SHIPPO_FROM_STREET1    = SECRETS.get('SHIPPO_FROM_STREET1', '')
+SHIPPO_FROM_STREET2    = SECRETS.get('SHIPPO_FROM_STREET2', '')
+SHIPPO_FROM_CITY       = SECRETS.get('SHIPPO_FROM_CITY', '')
+SHIPPO_FROM_STATE      = SECRETS.get('SHIPPO_FROM_STATE', '')
+SHIPPO_FROM_ZIP        = SECRETS.get('SHIPPO_FROM_ZIP', '')
+SHIPPO_FROM_COUNTRY    = SECRETS.get('SHIPPO_FROM_COUNTRY', 'US')
+SHIPPO_FROM_PHONE      = SECRETS.get('SHIPPO_FROM_PHONE', '')
+SHIPPO_FROM_EMAIL      = SECRETS.get('SHIPPO_FROM_EMAIL', '')
+# Every order ships in one fixed box size for now — per-product custom
+# dimensions would require real bin-packing, out of scope for v1.
+SHIPPO_PARCEL_LENGTH_IN = 10
+SHIPPO_PARCEL_WIDTH_IN  = 8
+SHIPPO_PARCEL_HEIGHT_IN = 4
+
 # booking
 BOOKING_PAYMENT_HOLD_MINUTES          = 20
 BOOKING_PROMOTION_HOLD_HOURS          = 24

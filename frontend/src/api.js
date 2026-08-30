@@ -5,6 +5,7 @@
  */
 
 import { captureError } from './utils/logger'
+import { apiFetch } from './utils/api'
 
 /** Read the Django CSRF token from the cookie jar. */
 function getCsrfToken() {
@@ -53,3 +54,12 @@ export const get  = (path)       => request('GET',    path);
 export const post = (path, body) => request('POST',   path, body);
 export const put  = (path, body) => request('PUT',    path, body);
 export const del  = (path)       => request('DELETE', path);
+
+/**
+ * User's single saved shipping address (core_app.CustomUser.address_*).
+ * Unlike the helpers above, these use the JWT-authenticated apiFetch client —
+ * the same one every module's own api.js uses — since IsAuthenticated views
+ * are JWT-protected, not session/CSRF-protected.
+ */
+export const getMyAddress    = ()     => apiFetch('/api/address/', { method: 'GET' });
+export const updateMyAddress = (data) => apiFetch('/api/address/', { method: 'PATCH', body: JSON.stringify(data) });

@@ -44,3 +44,22 @@ body {
 .is-shrinkable .level-item {
   flex-shrink: 1;
 }
+
+.card-header { background-color: var(--bulma-scheme-main-bis) }
+
+/* Bulma's bare .is-light button uses a literal light background (--bulma-light-l)
+   that doesn't flip in dark mode, so it reads as high-contrast against a dark page.
+   Reuse Bulma's own theme-aware --bulma-soft-l tokens (the same ones .is-light.is-soft
+   uses) so every plain is-light button adapts automatically. */
+.button.is-light {
+  --bulma-button-background-l: var(--bulma-soft-l);
+  --bulma-button-color-l: var(--bulma-soft-invert-l);
+}
+
+/* Same fix as .button.is-light above, applied to notifications: bare
+   .notification.is-light also uses a literal (non-theme-aware) light
+   background in Bulma. */
+.notification.is-light {
+  --bulma-notification-background-l: var(--bulma-soft-invert-l);
+  --bulma-notification-color-l: var(--bulma-soft-invert-l);
+}
