@@ -40,8 +40,6 @@ SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 
-STRIPE_SECRET_KEY = SECRETS.get("STRIPE_SECRET_KEY", "")
-
 # Default lives inside the app dir (already owned/writable by the deploy
 # user) rather than /var/log, so a missing LOG_FILE secret can't crash
 # startup with "Unable to configure handler 'file'".
