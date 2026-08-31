@@ -13,6 +13,15 @@ body {
   flex-direction: column;
 }
 
+/* main is a flex item in App.jsx's row (alongside AdminSidebar). Flex items
+   default to min-width: auto, meaning they won't shrink below the min-content
+   width of their descendants — so a non-shrinking child (e.g. a fixed-width
+   carousel track in a module's home section) can force main, and the whole
+   page, wider than the viewport on mobile. min-width: 0 removes that floor. */
+main {
+  min-width: 0;
+}
+
 .site-logo-icon-dark {
   display: none;
 }
