@@ -47,13 +47,84 @@ export const providers = [];     // Context providers wrapped around the app tre
 export const navbarEnd = [];     // Components in the Navbar's right slot
 export const adminCards = [];    // Cards on /admin
 export const userSections = [];  // Cards on /dashboard
-export const homeSections = [];  // Sections rendered on the homepage ("/")
+export const homeSections = [];  // Declarative homepage ("/") layout — see below
+export const HomePage = undefined; // Full homepage component override — see below
 ```
 
 Components under `site/frontend/src/` can import shared core code via the
 `@core/frontend/...` alias, the same as any module (e.g.
 `@core/frontend/components/SiteLogo.jsx`). No `module.json` is needed — `site/` isn't a
 real module and doesn't go through the `requires`/dependency graph.
+
+#### `homeSections`: the site owns the homepage layout
+
+Modules don't put anything on the homepage on their own. A module that has something to
+offer the homepage exports a `homeWidgets` map instead of `homeSections` — a namespaced
+registry of configurable components, not a rendered list:
+
+```js
+// modules/billing/frontend/src/index.js
+export const homeWidgets = { featuredProducts: FeaturedProducts };
+```
+
+`install.py` collects every enabled module's `homeWidgets` into `moduleHomeWidgets` in
+the generated `modules.js`, keyed by module name (`{ billing: { featuredProducts: ... },
+booking: { upcomingEvents: ... } }`). Nothing renders from that registry by itself.
+
+The site's own `homeSections` array is the actual homepage layout — a list of entries
+rendered top to bottom, in order. Each entry is either a plain component (site-owned
+content) or a `{ widget: '<module>.<key>', props }` reference that pulls a component out
+of `moduleHomeWidgets` and renders it with the given props:
+
+```js
+// site/frontend/src/index.js
+export const homeSections = [
+  BannerSection,                                        // site's own component
+  AboutSection,
+  { widget: 'billing.featuredProducts', props: { limit: 6 } },
+  { widget: 'booking.upcomingEvents' },                 // uses the widget's own defaults
+];
+```
+
+A module's widget only appears if the site's `homeSections` references it — enabling a
+module does not, by itself, add anything to the homepage. A site with no `index.js` (or
+one that omits `homeSections`) gets an empty homepage (via core's default `HomePage`,
+below). This is deliberate: modules publish configurable units, the site decides what
+appears, in what order, and with what configuration.
+
+#### `HomePage`: escaping the declarative layout entirely
+
+`homeSections` covers ordering and configuring widgets, but it's still core's generic
+`HomePage.jsx` doing the rendering. If a site needs more than that — custom markup
+between sections, conditional sections based on site-specific state, widgets composed
+with site-only components in a layout `homeSections` can't express — it can export its
+own `HomePage` component instead:
+
+```js
+// site/frontend/src/index.js
+import { moduleHomeWidgets } from '@core/frontend/modules.js';
+
+const { featuredProducts: FeaturedProducts } = moduleHomeWidgets.billing;
+
+export function HomePage() {
+  return (
+    <>
+      <BannerSection />
+      <FeaturedProducts limit={6} title="Just In" />
+      <AboutSection />
+    </>
+  );
+}
+```
+
+A custom `HomePage` can reach a module's widgets either through `moduleHomeWidgets`
+(re-exported from `@core/frontend/modules.js`, the same registry `homeSections`
+resolves against) or by importing a module directly (`import * as billing from
+'@modules/billing'`) for anything else the module exports. `install.py` wires
+`siteModule.HomePage` into the generated `modules.js` as `siteHomePage`; `App.jsx` uses
+it for the `/` route when present, and falls back to core's own `HomePage.jsx` (the
+`homeSections`-driven default) otherwise. A site only needs one of `homeSections` or
+`HomePage` — `HomePage`, if exported, takes full control and `homeSections` is ignored.
 
 Run `python core/install.py regen` after adding or changing this file (or anything in
 `site/frontend/src/`) — `modules.js` is generated and must never be hand-edited.

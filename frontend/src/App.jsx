@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
-import { moduleRoutes } from './modules.js';
+import { moduleRoutes, siteHomePage } from './modules.js';
 import Navbar from './components/Navbar.jsx';
 import AdminPage from './components/AdminPage.jsx';
 import AdminSidebar from './components/AdminSidebar.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
-import HomePage from './components/HomePage.jsx';
+import DefaultHomePage from './components/HomePage.jsx';
 import UserPage from './components/UserPage.jsx';
 import NotFoundPage from './components/NotFoundPage.jsx';
 import PrivateRoute from './components/PrivateRoute.jsx';
@@ -19,6 +19,8 @@ function ScrollToTop() {
   }, [pathname, hash]);
   return null;
 }
+
+const HomePage = siteHomePage ?? DefaultHomePage;
 
 export default function App() {
   return (
