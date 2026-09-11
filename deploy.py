@@ -192,16 +192,70 @@ def _check_enabled_modules_present():
         _die(f"modules.json lists module(s) not found under modules/: {', '.join(missing)}")
 
 
-def _load_frontend_sentry_dsn():
-    """SENTRY_DSN_FRONTEND lives in secrets.production.json (repo root, never
-    committed) alongside SENTRY_DSN_BACKEND, not in deploy.env -- one file
-    holds both Sentry DSNs. Returns '' if the file or key isn't present yet
-    (e.g. a first deploy before --sync-secrets has ever been run).
+def _production_secret(key):
+    """Read one value from secrets.production.json (repo root, never committed).
+    Returns '' if the file or key isn't present yet (e.g. a first deploy before
+    --sync-secrets has ever been run).
     """
     if not SECRETS_FILE.exists():
         return ""
     with SECRETS_FILE.open() as f:
-        return json.load(f).get("SENTRY_DSN_FRONTEND", "")
+        return json.load(f).get(key, "")
+
+
+def _load_frontend_sentry_dsn():
+    """SENTRY_DSN_FRONTEND lives in secrets.production.json alongside
+    SENTRY_DSN_BACKEND, not in deploy.env -- one file holds both Sentry DSNs.
+    """
+    return _production_secret("SENTRY_DSN_FRONTEND")
+
+
+def _key_mode(key):
+    """'live', 'test' or '' for a Stripe key, inferred from its prefix."""
+    for prefix, mode in (("_live_", "live"), ("_test_", "test")):
+        if prefix in key[:8]:
+            return mode
+    return ""
+
+
+def _resolve_stripe_publishable_key(config):
+    """Return the publishable key to bake into the frontend bundle.
+
+    secrets.production.json wins over deploy.env: the secret key the backend
+    runs with lives there, so taking the publishable key from the same file
+    keeps the two in the same Stripe mode. A publishable key whose mode does
+    not match the secret key is a hard stop -- it builds a frontend that
+    cannot talk to its own backend (Stripe.js rejects the mismatched
+    client_secret with a 400 and the Payment Element never loads).
+    """
+    secret_key      = _production_secret("STRIPE_SECRET_KEY")
+    publishable_key = _production_secret("STRIPE_PUBLISHABLE_KEY")
+    source          = "secrets.production.json"
+
+    if not publishable_key:
+        publishable_key = config.get("STRIPE_PUBLISHABLE_KEY", "")
+        source          = "deploy.env"
+
+    if not publishable_key:
+        if secret_key:
+            _die(
+                "No STRIPE_PUBLISHABLE_KEY in secrets.production.json or deploy.env, but "
+                "STRIPE_SECRET_KEY is set -- the frontend would build without a Stripe key "
+                "and checkout would not render."
+            )
+        return ""
+
+    secret_mode      = _key_mode(secret_key)
+    publishable_mode = _key_mode(publishable_key)
+    if secret_mode and publishable_mode and secret_mode != publishable_mode:
+        _die(
+            f"Stripe key mode mismatch: STRIPE_SECRET_KEY is {secret_mode} mode but the "
+            f"publishable key from {source} is {publishable_mode} mode. Update the "
+            f"publishable key to a {secret_mode} key before deploying."
+        )
+
+    print(f"Stripe publishable key: {publishable_mode or 'unknown'} mode (from {source})")
+    return publishable_key
 
 
 def _load_deploy_env():
@@ -468,6 +522,7 @@ VITE_WS_URL="wss://{config['DOMAIN']}" \\
 VITE_RECAPTCHA_SITE_KEY="{config['RECAPTCHA_SITE_KEY']}" \\
 VITE_GOOGLE_CLIENT_ID="{config['GOOGLE_CLIENT_ID']}" \\
 VITE_STRIPE_PUBLISHABLE_KEY="{config.get('STRIPE_PUBLISHABLE_KEY', '')}" \\
+VITE_SENTRY_DSN="{config.get('SENTRY_DSN_FRONTEND', '')}" \\
 VITE_RELEASE_VERSION="{release_version}" \\
 VITE_APP_NAME="{config['APP_NAME']}" \\
 VITE_APP_ICON="{config.get('APP_ICON', '')}" \\
@@ -592,6 +647,7 @@ def main():
     _require_tools(*required_tools)
     config = _load_deploy_env()
     config["SENTRY_DSN_FRONTEND"] = _load_frontend_sentry_dsn()
+    config["STRIPE_PUBLISHABLE_KEY"] = _resolve_stripe_publishable_key(config)
     _check_enabled_modules_present()
 
     release_version = _determine_release_version()
