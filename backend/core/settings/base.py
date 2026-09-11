@@ -218,6 +218,30 @@ SHIPPO_PARCEL_LENGTH_IN = 10
 SHIPPO_PARCEL_WIDTH_IN  = 8
 SHIPPO_PARCEL_HEIGHT_IN = 4
 
+# billing (sales tax)
+# Destination-based sales tax charged on physical goods only, keyed by the
+# shipping address state. Digital / no-ship items are never taxed. Rates are
+# strings so they parse as exact Decimals — never floats.
+#
+# For California the real rate comes from the CDTFA address lookup below; this
+# value is only the fallback when that service is unreachable, so it should be
+# set to the home district's combined rate. For any other state listed here the
+# flat rate is authoritative.
+BILLING_TAX_RATES = {
+    'CA': '0.0975',
+}
+# California does not tax separately-stated shipping charges that reflect the
+# actual cost of delivery, so shipping is excluded from the taxable base.
+BILLING_TAX_ON_SHIPPING = False
+
+# CDTFA Tax Rate API — free, unauthenticated, rooftop-accurate. Resolves the
+# district portion of the CA rate per shipping address. Disable to fall back to
+# the flat BILLING_TAX_RATES['CA'] everywhere.
+BILLING_CDTFA_LOOKUP_ENABLED        = True
+BILLING_CDTFA_TIMEOUT_SECONDS       = 5
+BILLING_CDTFA_CACHE_SECONDS         = 86400   # rates change on quarter boundaries
+BILLING_CDTFA_FAILURE_CACHE_SECONDS = 300     # don't hammer the service during an outage
+
 # booking
 BOOKING_PAYMENT_HOLD_MINUTES          = 20
 BOOKING_PROMOTION_HOLD_HOURS          = 24
