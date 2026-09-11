@@ -11,7 +11,7 @@ export default function AdminPage() {
         ) : (
           <div className="columns is-multiline">
             {moduleAdminCards.map((card, i) => (
-              <div key={i} className="column is-one-third">
+              <div key={i} className="column is-half">
                 <div className="card">
                   <header className="card-header">
                     <p className="card-header-title">{card.title}</p>

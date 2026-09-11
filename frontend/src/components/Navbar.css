@@ -27,10 +27,6 @@
   border-radius: 5px;
 }
 
-.navbar-link {
-  color: #000;
-}
-
 .navbar-mobile-item:hover {
   background-color: #f5f5f5;
   color: #363636;
