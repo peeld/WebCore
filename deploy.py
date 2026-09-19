@@ -485,6 +485,12 @@ def deploy_release(config, release_version):
 
     remote_script = f"""
 set -e
+
+# Every step header carries a UTC timestamp. The frontend build in
+# particular produces no output for minutes at a time under a non-TTY
+# npm, so without these a slow step and a wedged one look identical.
+step() {{ echo "--- $* --- [$(date -u +%H:%M:%SZ)]"; }}
+
 APP_DIR={app_dir}
 NEW_DIR="${{APP_DIR}}.new"
 OLD_DIR="${{APP_DIR}}.old"
@@ -504,17 +510,23 @@ if [ -d "$APP_DIR/{MEDIA_REL_PATH}" ]; then
   cp -a "$APP_DIR/{MEDIA_REL_PATH}" "$NEW_DIR/{MEDIA_REL_PATH}"
 fi
 
-echo "--- Regenerating module manifests (in staging dir) ---"
+step "Regenerating module manifests (in staging dir)"
 cd "$NEW_DIR"
 source ../venv/bin/activate
 python core/install.py regen
 
-echo "--- Installing Python dependencies ---"
+step "Installing Python dependencies"
 pip install -r core/backend/requirements.txt --quiet
 
-echo "--- Building frontend ---"
+step "Building frontend: npm ci"
 cd core/frontend
-npm ci --legacy-peer-deps
+npm ci --legacy-peer-deps --no-audit --no-fund --prefer-offline --foreground-scripts
+
+step "Building frontend: vite build"
+# Rollup/Vite will happily grow past what this 2GB box has left once the
+# app's own workers are resident; cap the heap so V8 GCs instead of
+# pushing the machine into swap-thrash (or an OOM kill).
+NODE_OPTIONS="--max-old-space-size=1024" \\
 NODE_ENV=production \\
 VITE_ENV=production \\
 VITE_API_URL="https://{config['DOMAIN']}" \\
@@ -528,17 +540,18 @@ VITE_APP_NAME="{config['APP_NAME']}" \\
 VITE_APP_ICON="{config.get('APP_ICON', '')}" \\
 VITE_NAV_ICON="{config.get('NAV_ICON', '')}" \\
 npm run build
+step "Frontend build complete"
 cd ../..
 
-echo "--- Running migrations ---"
+step "Running migrations"
 DJANGO_SETTINGS_MODULE=core.settings.production \\
   python core/backend/manage.py migrate --no-input
 
-echo "--- Collecting static files ---"
+step "Collecting static files"
 DJANGO_SETTINGS_MODULE=core.settings.production \\
   python core/backend/manage.py collectstatic --no-input
 
-echo "--- Setting permissions ---"
+step "Setting permissions"
 chown -R www-data:www-data "$NEW_DIR"
 
 echo "===SWAP-START==="
@@ -548,10 +561,10 @@ fi
 mv "$NEW_DIR" "$APP_DIR"
 echo "===SWAP-DONE==="
 
-echo "--- Restarting {service} ---"
+step "Restarting {service}"
 systemctl restart {service}
 
-echo "--- Deploy complete (previous release kept at $OLD_DIR pending smoke test) ---"
+step "Deploy complete (previous release kept at $OLD_DIR pending smoke test)"
 """
     tar_stream = subprocess.run(_tar_command("-czf"), cwd=ROOT_DIR, capture_output=True)
     if tar_stream.returncode != 0:
