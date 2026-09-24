@@ -29,8 +29,24 @@ if _sentry_dsn:
             LoggingIntegration(level=logging.ERROR, event_level=logging.ERROR),
         ],
     )
+    MIDDLEWARE += ['core.sentry.SentryUserMiddleware']  # noqa: F405
 
 CORS_ALLOWED_ORIGINS = SECRETS.get('CORS_ALLOWED_ORIGINS', [])
+
+# Throttle counters must be shared by every gunicorn worker; the default
+# per-process LocMemCache multiplies each rate limit by the worker count.
+# The table is created by `manage.py createcachetable` (run by deploy.py).
+CACHES = {
+    'default': {
+        'BACKEND':  'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'django_cache',
+    }
+}
+
+# Number of reverse proxies in front of Django (nginx = 1). DRF throttles then
+# take the client IP from the entry the proxy appended to X-Forwarded-For,
+# rather than the whole header, which the client controls.
+REST_FRAMEWORK['NUM_PROXIES'] = int(SECRETS.get('NUM_PROXIES', 1))  # noqa: F405
 
 # Security headers
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

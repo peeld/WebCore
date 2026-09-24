@@ -547,6 +547,10 @@ step "Running migrations"
 DJANGO_SETTINGS_MODULE=core.settings.production \\
   python core/backend/manage.py migrate --no-input
 
+step "Creating cache table"
+DJANGO_SETTINGS_MODULE=core.settings.production \
+  python core/backend/manage.py createcachetable
+
 step "Collecting static files"
 DJANGO_SETTINGS_MODULE=core.settings.production \\
   python core/backend/manage.py collectstatic --no-input

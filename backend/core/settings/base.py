@@ -95,6 +95,8 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME':  timedelta(hours=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS':  True,
+    # Without this a rotated-out refresh token stays usable for its full lifetime.
+    'BLACKLIST_AFTER_ROTATION': True,
 }
 
 LANGUAGE_CODE = 'en-us'
@@ -262,6 +264,8 @@ AWS_UPLOAD_BUCKET          = SECRETS.get('AWS_UPLOAD_BUCKET', '')
 AWS_PROCESSED_BUCKET       = SECRETS.get('AWS_PROCESSED_BUCKET', '')
 AWS_S3_REGION              = 'us-east-1'
 FILEUPLOAD_WEBHOOK_SECRET  = SECRETS.get('FILEUPLOAD_WEBHOOK_SECRET', '')
+FILEUPLOAD_MAX_BYTES       = 100 * 1024 * 1024  # enforced via the signed Content-Length
+FILEUPLOAD_ALLOWED_CONTENT_TYPES = None         # e.g. ['image/png', 'application/pdf']; None allows any
 
 # licensing
 LICENSE_APP_SECRET               = SECRETS.get('LICENSE_APP_SECRET', '')
