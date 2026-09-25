@@ -4,6 +4,7 @@ Environment-specific files (development.py, production.py) import from here.
 """
 from pathlib import Path
 from datetime import timedelta
+from corsheaders.defaults import default_headers
 from django.core.exceptions import ImproperlyConfigured
 from core.secrets import SECRETS
 
@@ -43,6 +44,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# X-Org-ID carries the active org (orgs module convention) on cross-origin calls
+# from the Vite dev server / a separately hosted frontend.
+CORS_ALLOW_HEADERS = (*default_headers, 'x-org-id')
 
 ROOT_URLCONF = 'core.urls'
 
@@ -150,7 +155,15 @@ except ImportError:
     MODULE_EXTRA_MIDDLEWARE = []
     MODULE_REQUIRED_SETTINGS = []
 
-INSTALLED_APPS += INSTALLED_MODULE_APPS + MODULE_EXTRA_APPS
+# site/backend's Django app, if the site has one. Listed last so it loads after
+# every module it may listen to. Kept out of INSTALLED_MODULE_APPS so it is not
+# mounted as a module URL namespace.
+try:
+    from core.installed_modules import SITE_APPS
+except ImportError:
+    SITE_APPS = []
+
+INSTALLED_APPS += INSTALLED_MODULE_APPS + MODULE_EXTRA_APPS + SITE_APPS
 MIDDLEWARE += MODULE_EXTRA_MIDDLEWARE
 
 # ---------------------------------------------------------------------------
@@ -266,6 +279,11 @@ AWS_S3_REGION              = 'us-east-1'
 FILEUPLOAD_WEBHOOK_SECRET  = SECRETS.get('FILEUPLOAD_WEBHOOK_SECRET', '')
 FILEUPLOAD_MAX_BYTES       = 100 * 1024 * 1024  # enforced via the signed Content-Length
 FILEUPLOAD_ALLOWED_CONTENT_TYPES = None         # e.g. ['image/png', 'application/pdf']; None allows any
+FILEUPLOAD_OWNERSHIP       = 'auto'  # 'auto' (org if orgs is installed, else user) | 'org' | 'user'
+FILEUPLOAD_DEFAULT_SPACE   = True    # user mode: create "My files" on a user's first visit
+FILEUPLOAD_DEFAULT_SCHEMA  = None    # schema key for that default space; None = free-form
+FILEUPLOAD_SCHEMA_DIR      = REPO_ROOT / 'site' / 'backend' / 'fileupload' / 'schemas'  # site schema files (*.json)
+FILEUPLOAD_VALIDATORS      = []      # dotted paths to site validators; the site can also register_validator() in ready()
 
 # licensing
 LICENSE_SECRETS_ENCRYPTION_KEYS  = SECRETS.get('LICENSE_SECRETS_ENCRYPTION_KEYS', [])

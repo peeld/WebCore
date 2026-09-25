@@ -174,6 +174,14 @@ def _has_site_content():
            (SITE_DIR / "frontend" / "src" / "index.jsx").exists()
 
 
+SITE_APP = "site_app"  # not "site": that would shadow Python's stdlib `site` module
+
+
+def _has_site_backend():
+    """Return True if site/backend/site_app/apps.py exists — the site's own Django app."""
+    return (SITE_DIR / "backend" / SITE_APP / "apps.py").exists()
+
+
 def _check_route_collisions(exclude=None):
     """Abort on exact route duplicates; warn on parameterized structural conflicts."""
     enabled = set(_load_enabled_modules())
@@ -395,6 +403,7 @@ def generate_installed_modules(exclude=None):
         f"MODULE_EXTRA_APPS        = {extra_apps!r}",
         f"MODULE_EXTRA_MIDDLEWARE  = {extra_middleware!r}",
         f"MODULE_REQUIRED_SETTINGS = {required_settings!r}",
+        f"SITE_APPS                = {[SITE_APP] if _has_site_backend() else []!r}",
         "",
     ]
     out.write_text("\n".join(lines))
@@ -458,20 +467,34 @@ def _wire_module(name, manifest=None):
 
 
 def _wire_site():
-    """Link core/frontend/public -> ../../site/frontend/public.
+    """Link core/frontend/public -> ../../site/frontend/public, and the site's
+    backend app (if any) into core/backend.
 
-    Keeps this deployment's branding assets (favicon, logos) out of core's
-    repo while still serving them from Vite's public dir. Idempotent.
+    Keeps this deployment's branding assets (favicon, logos) and site hooks
+    out of core's repo. Idempotent.
     """
     public_link = FRONTEND_DIR / "public"
-    if _is_dir_link(public_link):
-        return
-    if public_link.exists():
-        _die(f"{public_link} exists and is not a link — remove it manually first.")
-    site_public = SITE_DIR / "frontend" / "public"
-    site_public.mkdir(parents=True, exist_ok=True)
-    _link_dir(public_link, Path("../../site/frontend/public"))
-    print(f"  + Linked core/frontend/public -> site/frontend/public")
+    if not _is_dir_link(public_link):
+        if public_link.exists():
+            _die(f"{public_link} exists and is not a link — remove it manually first.")
+        site_public = SITE_DIR / "frontend" / "public"
+        site_public.mkdir(parents=True, exist_ok=True)
+        _link_dir(public_link, Path("../../site/frontend/public"))
+        print(f"  + Linked core/frontend/public -> site/frontend/public")
+
+    # Site backend app: core/backend/site_app -> ../../site/backend/site_app
+    # (listed in SITE_APPS by generate_installed_modules). The site may import
+    # from modules; modules never import from the site.
+    app_link = BACKEND_DIR / SITE_APP
+    if _has_site_backend():
+        if not _is_dir_link(app_link):
+            if app_link.exists():
+                _die(f"{app_link} exists and is not a link — remove it manually first.")
+            _link_dir(app_link, Path("../../site/backend") / SITE_APP)
+            print(f"  + Linked core/backend/{SITE_APP} -> site/backend/{SITE_APP}")
+    elif _is_dir_link(app_link):
+        _unlink_dir(app_link)
+        print(f"  - Removed core/backend/{SITE_APP} (site has no backend app)")
 
 
 # ---------------------------------------------------------------------------
